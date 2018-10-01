@@ -1,0 +1,160 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>net.wasdev.wlp.maven.parent</groupId>
+		<artifactId>liberty-maven-app-parent</artifactId>
+		<version>2.6</version>
+	</parent>
+
+	<groupId>ch.micros.sample1</groupId>
+	<artifactId>helloWorld</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+	<dependencies>
+
+		<dependency>
+			<groupId>javax</groupId>
+			<artifactId>javaee-api</artifactId>
+			<version>8.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.microprofile</groupId>
+			<artifactId>microprofile</artifactId>
+			<version>2.0.1</version>
+			<type>pom</type>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+			<version>2.0.1.Final</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
+
+	</dependencies>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<failOnMissingWebXml>false</failOnMissingWebXml>
+		<version.maven-war-plugin>3.2.2</version.maven-war-plugin>
+		<generation.package>ch.micros.sample1.helloworld</generation.package>
+		<!-- OpenLiberty runtime -->
+		<version.openliberty-runtime>18.0.0.3</version.openliberty-runtime>
+		<http.port>9080</http.port>
+		<https.port>9443</https.port>
+		<packaging.type>usr</packaging.type>
+		<app.name>${project.artifactId}</app.name>
+		<package.file>${project.build.directory}/${app.name}.zip</package.file>
+	</properties>
+
+	<!-- Profiles for temporarily switching packaging types -->
+	<profiles>
+		<!-- tag::profile-runnable-package[] -->
+		<profile>
+			<id>runnable-package</id>
+			<properties>
+				<packaging.type>runnable</packaging.type>
+			</properties>
+		</profile>
+		<!-- end::profile-runnable-package[] -->
+		<profile>
+			<id>minify-runnable-package</id>
+			<properties>
+				<packaging.type>minify,runnable</packaging.type>
+			</properties>
+		</profile>
+	</profiles>
+
+	<build>
+		<finalName>sample1-helloworld</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>${version.maven-war-plugin}</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<packagingExcludes>pom.xml</packagingExcludes>
+				</configuration>
+			</plugin>
+
+			<!-- Enable liberty-maven plugin -->
+			<plugin>
+				<groupId>net.wasdev.wlp.maven.plugins</groupId>
+				<artifactId>liberty-maven-plugin</artifactId>
+				<configuration>
+					<assemblyArtifact>
+						<groupId>io.openliberty</groupId>
+						<artifactId>openliberty-runtime</artifactId>
+						<version>${version.openliberty-runtime}</version>
+						<type>zip</type>
+					</assemblyArtifact>
+					<serverName>MicrosHelloWorldServer</serverName>
+					<stripVersion>true</stripVersion>
+					<configFile>src/main/liberty/config/server.xml</configFile>
+					<!-- tag::loose-app[] -->
+					<looseApplication>true</looseApplication>
+					<!-- end::loose-app[] -->
+					<packageFile>${package.file}</packageFile>
+					<include>${packaging.type}</include>
+					<bootstrapProperties>
+						<default.http.port>${http.port}</default.http.port>
+						<default.https.port>${https.port}</default.https.port>
+						<app.context.root>${app.name}</app.context.root>
+					</bootstrapProperties>
+				</configuration>
+			</plugin>
+
+			<!-- openAPI Generator -->
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>3.2.3</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/webapp/META-INF/openapi.yaml</inputSpec>
+							<generatorName>jaxrs-spec</generatorName>
+							<generateModels>true</generateModels>
+							<generateApis>true</generateApis>
+							<generateApiTests>false</generateApiTests>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateModelTests>false</generateModelTests>
+							<modelPackage>${generation.package}.api.model</modelPackage>
+							<apiPackage>${generation.package}.api</apiPackage>
+							<invokerPackage>${generation.package}.api.impl</invokerPackage>
+							<output>.</output>
+							<configOptions>
+								<dateLibrary>java8</dateLibrary>
+								<interfaceOnly>true</interfaceOnly>
+								<returnResponse>true</returnResponse>
+								<useGenericResponse>true</useGenericResponse>
+								<useSwaggerAnnotations>false</useSwaggerAnnotations>
+								<withXml>true</withXml>
+							</configOptions>
+							<generateSupportingFiles>false</generateSupportingFiles>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>    
+
